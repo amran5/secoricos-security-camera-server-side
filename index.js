@@ -21,6 +21,7 @@ async function run() {
         await client.connect();
         const database = client.db("secoricos_security");
         const allProductsCollection = database.collection("allProducts");
+        const reviewCollection = database.collection("review");
         const usersCollection = database.collection("users");
 
         // get api
@@ -43,6 +44,13 @@ async function run() {
             const allProduct = req.body;
             const result = await allProductsCollection.insertOne(allProduct);
             res.json(result)
+        });
+
+        //UPload Review Data Method 
+        app.post('/review', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.json(result);
         });
 
         //put api make a admin
