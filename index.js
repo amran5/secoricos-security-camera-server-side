@@ -21,8 +21,10 @@ async function run() {
         await client.connect();
         const database = client.db("secoricos_security");
         const allProductsCollection = database.collection("allProducts");
+        const expressCollection = database.collection("express");
         const reviewCollection = database.collection("review");
         const usersCollection = database.collection("users");
+        const ordersCollection = database.collection("orders");
 
         // get api
         app.get('/allProducts', async (req, res) => {
@@ -46,6 +48,13 @@ async function run() {
             res.json(result)
         });
 
+        //get api express
+        app.get('/express', async (req, res) => {
+            const cursor = expressCollection.find({});
+            const result = await cursor.toArray();
+            res.json(result);
+        })
+
         //UPload Review Data Method 
         app.post('/review', async (req, res) => {
             const review = req.body;
@@ -53,8 +62,67 @@ async function run() {
             res.json(result);
         });
 
+        // Get Review Data 
+        app.get('/review', async (req, res) => {
+            const data = reviewCollection.find({});
+            const result = await data.toArray();
+            res.json(result);
+        });
+
+        //put api orders
+        app.post('/orders', async (req, res) => {
+            const orderData = req.body;
+            const result = await ordersCollection.insertOne(orderData);
+            res.json(result);
+        });
+
+        //all orders 
+        app.get('/orders', async (req, res) => {
+            const orders = ordersCollection.find({});
+            const result = await orders.toArray();
+            res.json(result);
+        })
+
+        //orders 
+        app.get('/orders', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const orders = ordersCollection.find(query);
+            const result = await orders.toArray();
+            res.json(result);
+        });
+
+        // get api admin
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin })
+        });
+
+        //spacial email post api
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.json(result);
+        });
+
+        //spacial email put api
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        })
+
         //put api make a admin
-        app.put('users/admin', async (req, res) => {
+        app.put('/users/admin', async (req, res) => {
             const user = req.body;
             const filter = { email: user.email };
             const updateDoc = { $set: { role: 'admin' } };
